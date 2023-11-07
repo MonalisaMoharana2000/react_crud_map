@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import GoogleMapReact from "google-map-react";
+import Api from "./Api";
 
 const App = () => {
   const [input1Value, setInput1Value] = useState("");
+  console.log("inputValue--->", input1Value);
   const [input2Value, setInput2Value] = useState("");
   const [input3Value, setInput3Value] = useState("");
   const [input4Value, setInput4Value] = useState("");
@@ -10,6 +12,16 @@ const App = () => {
   const [input6Value, setInput6Value] = useState("");
   const [dataList, setDataList] = useState([]);
   const [selectedData, setSelectedData] = useState(null);
+  console.log("selectedData--------->", selectedData);
+
+  const fetchData = async () => {
+    const response = await Api.get("/getPost");
+    console.log("response--->", response.data);
+    setDataList(response.data.data);
+  };
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleInput1Change = (event) => {
     setInput1Value(event.target.value);
@@ -32,56 +44,78 @@ const App = () => {
     setInput6Value(event.target.value);
   };
 
-  const handleDataSubmit = () => {
-    if (selectedData) {
-      const updatedDataList = dataList.map((data) =>
-        data === selectedData
-          ? {
-              input1: input1Value,
-              input2: input2Value,
-              input3: input3Value,
-              input4: input4Value,
-              input5: input5Value,
-              input6: input6Value,
-            }
-          : data
-      );
-      setDataList(updatedDataList);
-      setSelectedData(null);
-    } else {
-      const newData = {
-        input1: input1Value,
-        input2: input2Value,
-        input3: input3Value,
-        input4: input4Value,
-        input5: input5Value,
-        input6: input6Value,
-      };
-      setDataList([...dataList, newData]);
-    }
+  const handleDataSubmit = async () => {
+    try {
+      if (selectedData) {
+        const body = {
+          stopName: input1Value,
+          stopAddress: input2Value,
+          lattitude: input3Value,
+          longitude: input4Value,
+          pickupPrice: input5Value,
+          dropPrice: input6Value,
+        };
+        console.log("update body--->", body);
+        const response = await Api.put(`updatePost/${selectedData._id}`, body);
+        console.log("updatedDataList---->", response.data, response.status);
+        if (response.status === 200) {
+          alert("Updated Successfully !");
+          fetchData();
+        }
+        // setDataList(updatedDataList);
+        // setSelectedData(null);
+      } else {
+        const body = {
+          stopName: input1Value,
+          stopAddress: input2Value,
+          lattitude: input3Value,
+          longitude: input4Value,
+          pickupPrice: input5Value,
+          dropPrice: input6Value,
+        };
+        // setDataList([...dataList, newData]);
 
-    setInput1Value("");
-    setInput2Value("");
-    setInput3Value("");
-    setInput4Value("");
-    setInput5Value("");
-    setInput6Value("");
+        const response = await Api.post("/createPost", body);
+        console.log("createresponse----->", response.data, response.status);
+        if (response.status === 200) {
+          alert("Created Successfully !");
+          fetchData();
+        }
+      }
+
+      setInput1Value("");
+      setInput2Value("");
+      setInput3Value("");
+      setInput4Value("");
+      setInput5Value("");
+      setInput6Value("");
+    } catch (err) {
+      alert("Failed !");
+    }
   };
 
   const handleEdit = (data) => {
-    setInput1Value(data.input1);
-    setInput2Value(data.input2);
-    setInput3Value(data.input3);
-    setInput4Value(data.input4);
-    setInput5Value(data.input5);
-    setInput6Value(data.input6);
+    setInput1Value(data.stopName);
+    setInput2Value(data.stopAddress);
+    setInput3Value(data.lattitude);
+    setInput4Value(data.longitude);
+    setInput5Value(data.pickupPrice);
+    setInput6Value(data.dropPrice);
     setSelectedData(data);
   };
 
-  const handleDelete = (data) => {
+  const handleDelete = async (data) => {
+    console.log("data==>", data);
     if (window.confirm("Are you sure you want to delete this data?")) {
-      const updatedDataList = dataList.filter((item) => item !== data);
-      setDataList(updatedDataList);
+      // const updatedDataList = dataList.filter((item) => item !== data);
+      // setDataList(updatedDataList);
+
+      const response = await Api.get(`/deletePost/${data._id}`);
+      console.log("delte--->", response, response.data);
+      if (response.status === 200) {
+        alert("Deleted Successfully !");
+        fetchData();
+      }
     }
   };
 
@@ -161,12 +195,12 @@ const DataList = ({ dataList, onEdit, onDelete }) => {
       <ul>
         {dataList.map((data, index) => (
           <li key={index}>
-            <p>Input 1: {data.input1}</p>
-            <p>Input 2: {data.input2}</p>
-            <p>Input 3 (Latitude): {data.input3}</p>
-            <p>Input 4 (Longitude): {data.input4}</p>
-            <p>Input 5: {data.input5}</p>
-            <p>Input 6: {data.input6}</p>
+            <p>Input 1: {data.stopName}</p>
+            <p>Input 2: {data.stopAddress}</p>
+            <p>Input 3 (Latitude): {data.lattitude}</p>
+            <p>Input 4 (Longitude): {data.longitude}</p>
+            <p>Input 5: {data.pickupPrice}</p>
+            <p>Input 6: {data.dropPrice}</p>
             <button onClick={() => onEdit(data)}>Edit</button>
             <button onClick={() => onDelete(data)}>Delete</button>
           </li>
