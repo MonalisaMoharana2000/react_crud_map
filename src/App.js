@@ -12,7 +12,6 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/create" element={<Add />} />
-          <Route path="/edit/:id" element={<Edit />} />
         </Routes>
       </Router>
     </div>
